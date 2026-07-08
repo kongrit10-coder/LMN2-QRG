@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แผนผังองค์กร LMN2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f2a3f; --steel:#1f5f7a; --teal:#2a9d8f; --teal-soft:#e3f3f0;
+    --amber:#e9a23b; --amber-soft:#fbf0db; --line:#cdd9df; --paper:#f6f8f9;
+    --white:#fff; --muted:#5d7480; --shadow:0 8px 28px -12px rgba(15,42,63,.28);
+    --red:#c0584e; --nav-w:248px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'IBM Plex Sans Thai',sans-serif;color:var(--ink);
+    background:var(--paper);min-height:100vh;-webkit-font-smoothing:antialiased;
+  }
+
+  /* ===== Layout ===== */
+  .app{display:flex;min-height:100vh;}
+  .nav{
+    width:var(--nav-w);flex-shrink:0;background:linear-gradient(180deg,var(--ink),#123449);
+    color:#cfe0e8;position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;
+    padding:26px 18px;z-index:30;
+  }
+  .nav-brand{margin-bottom:28px;padding:0 6px;}
+  .nav-brand .eyebrow{font-family:'Sora';font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--teal);}
+  .nav-brand h1{font-family:'Sora',sans-serif;font-weight:800;font-size:26px;color:#fff;line-height:1;margin-top:6px;}
+  .nav-brand .sub{font-size:12px;color:#8fadbb;margin-top:8px;line-height:1.4;}
+
+  .nav-item{
+    display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:11px;
+    cursor:pointer;color:#bcd2dd;font-weight:600;font-size:14.5px;margin-bottom:6px;
+    transition:background .15s ease,color .15s ease;border:1px solid transparent;
+  }
+  .nav-item .ic{font-size:18px;width:22px;text-align:center;}
+  .nav-item:hover{background:rgba(255,255,255,.06);color:#fff;}
+  .nav-item.active{background:var(--teal);color:#fff;box-shadow:0 6px 18px -8px rgba(42,157,143,.8);}
+  .nav-spacer{flex:1;}
+  .nav-foot{border-top:1px solid rgba(255,255,255,.12);padding-top:14px;}
+  .nav-btn{width:100%;text-align:left;background:rgba(255,255,255,.08);border:none;color:#cfe0e8;font-family:inherit;font-size:13px;font-weight:600;padding:10px 13px;border-radius:9px;cursor:pointer;margin-bottom:8px;transition:background .15s ease;}
+  .nav-btn:hover{background:rgba(255,255,255,.16);color:#fff;}
+  .nav-count{font-size:11.5px;color:#7 f;color:#7fa0b0;padding:0 6px;}
+  .mode-box{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#cfe0e8;padding:8px 12px;background:rgba(255,255,255,.06);border-radius:9px;margin-bottom:10px;font-weight:600;}
+  .mode-dot{width:9px;height:9px;border-radius:50%;background:#8fa9b6;flex-shrink:0;}
+  body.edit-mode .mode-dot{background:#39d98a;box-shadow:0 0 0 4px rgba(57,217,138,.2);}
+  body.edit-mode .mode-box{color:#d6ffe9;}
+  /* hide edit-only controls in view mode */
+  .edit-only{display:none;}
+  body.edit-mode .edit-only{display:block;}
+  /* hide inline add/edit affordances in view mode */
+  body:not(.edit-mode) .add-item,
+  body:not(.edit-mode) .add-goal-inline,
+  body:not(.edit-mode) .add-task-row,
+  body:not(.edit-mode) .item-actions,
+  body:not(.edit-mode) .t-del,
+  body:not(.edit-mode) .view-hint{display:none;}
+
+  .main{margin-left:var(--nav-w);flex:1;padding:38px 40px 80px;min-width:0;}
+  .page{display:none;animation:fade .25s ease;}
+  .page.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  .page-head{border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;}
+  .page-head .ph-eyebrow{font-family:'Sora';font-weight:600;letter-spacing:.28em;text-transform:uppercase;font-size:11px;color:var(--teal);}
+  .page-head h2{font-family:'Sora',sans-serif;font-weight:800;font-size:clamp(26px,4vw,40px);color:var(--ink);margin-top:6px;line-height:1.05;}
+  .page-head p{color:var(--muted);font-size:14px;margin-top:8px;max-width:56ch;}
+  .page-head .big{font-family:'Sora';font-weight:700;font-size:30px;color:var(--amber);display:block;line-height:1;text-align:right;}
+  .page-head .lbl{letter-spacing:.14em;text-transform:uppercase;font-size:11px;color:var(--muted);}
+
+  /* ===== Level bands (overview) ===== */
+  .level{margin-bottom:14px;padding:6px 0;}
+  .level-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;}
+  .level-rank{font-family:'Sora',sans-serif;font-weight:800;font-size:24px;line-height:1;color:#fff;background:var(--steel);border-radius:10px;padding:8px 12px;min-width:58px;text-align:center;}
+  .level-name{font-family:'Sora',sans-serif;font-weight:700;font-size:15px;color:var(--ink);text-transform:uppercase;letter-spacing:.06em;}
+  .level-name small{display:block;font-family:'IBM Plex Sans Thai';font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:12.5px;margin-top:2px;}
+  .level-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+  .lv75 .level-rank{background:var(--ink);}
+  .lv65 .level-rank{background:var(--steel);}
+  .lv55 .level-rank{background:var(--teal);}
+  .lv40 .level-rank{background:var(--amber);}
+
+  .node-card{background:var(--white);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);position:relative;overflow:hidden;cursor:pointer;padding:18px 20px 15px 24px;transition:transform .15s ease,box-shadow .15s ease;}
+  .node-card:hover{transform:translateY(-3px);box-shadow:0 14px 34px -14px rgba(15,42,63,.4);}
+  .node-card:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
+  .node-card .accent{position:absolute;left:0;top:0;bottom:0;width:5px;}
+  .lv75 .accent{background:linear-gradient(var(--ink),var(--steel));}
+  .lv65 .accent{background:linear-gradient(var(--steel),var(--teal));}
+  .lv55 .accent{background:linear-gradient(var(--teal),#1f8e80);}
+  .lv40 .accent{background:linear-gradient(var(--amber),#c97f1c);}
+  .role-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;}
+  .role-tag{font-family:'Sora',sans-serif;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;display:inline-block;padding:3px 10px;border-radius:999px;}
+  .lv75 .role-tag{background:var(--ink);color:#fff;}
+  .lv65 .role-tag{background:#dbe7ec;color:var(--steel);}
+  .lv55 .role-tag{background:var(--teal-soft);color:var(--teal);}
+  .lv40 .role-tag{background:var(--amber-soft);color:#b8741a;}
+  .rank-chip{font-family:'Sora',sans-serif;font-weight:700;font-size:13px;color:var(--muted);}
+  .person{font-weight:700;font-size:18px;color:var(--ink);line-height:1.25;}
+  .nickname{color:var(--steel);font-weight:600;}
+  .duties{margin-top:11px;border-top:1px dashed var(--line);padding-top:10px;}
+  .d-head{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:6px;}
+  .chip{display:inline-block;font-size:12.5px;font-weight:500;background:var(--teal-soft);color:var(--steel);padding:4px 10px;border-radius:8px;margin:0 5px 5px 0;}
+  .lv75 .chip,.lv40 .chip{background:var(--amber-soft);color:#b8741a;}
+  .view-hint{margin-top:10px;font-size:11.5px;color:var(--teal);font-weight:600;letter-spacing:.04em;}
+  .empty-note{font-size:13px;color:var(--muted);font-style:italic;padding:6px 0;}
+
+  .btn{font-family:'IBM Plex Sans Thai',sans-serif;font-weight:600;font-size:14px;border:none;border-radius:10px;padding:10px 18px;cursor:pointer;transition:filter .15s ease,transform .1s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:var(--teal);color:#fff;}
+  .btn-ghost{background:var(--white);color:var(--ink);border:1px solid var(--line);}
+  .btn-amber{background:var(--amber);color:#fff;}
+  .btn:hover{filter:brightness(1.05);}
+
+  /* ===== Person cards (KPI & Goals pages) ===== */
+  .plist{display:flex;flex-direction:column;gap:16px;}
+  .pcard{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--white);box-shadow:0 5px 20px -14px rgba(15,42,63,.4);}
+  .pcard-head{padding:15px 20px;display:flex;align-items:center;gap:12px;border-left:6px solid var(--steel);}
+  .pc75 .pcard-head{border-left-color:var(--ink);}
+  .pc65 .pcard-head{border-left-color:var(--steel);}
+  .pc55 .pcard-head{border-left-color:var(--teal);}
+  .pc40 .pcard-head{border-left-color:var(--amber);}
+  .pcard-head .pc-rank{font-family:'Sora';font-weight:800;font-size:15px;color:#fff;background:var(--steel);border-radius:8px;padding:4px 10px;min-width:42px;text-align:center;}
+  .pc75 .pc-rank{background:var(--ink);}
+  .pc55 .pc-rank{background:var(--teal);}
+  .pc40 .pc-rank{background:var(--amber);}
+  .pc-name{font-weight:700;font-size:16.5px;color:var(--ink);line-height:1.2;}
+  .pc-name .nk{color:var(--steel);font-weight:600;}
+  .pc-role{font-size:12px;color:var(--muted);margin-top:2px;}
+  .pcard-body{padding:8px 20px 18px;}
+
+  /* KPI items */
+  .kpi-item{border-top:1px solid var(--line);padding:13px 0 4px;}
+  .kpi-item:first-child{border-top:none;}
+  .kpi-item-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+  .kpi-item-title{font-weight:700;color:var(--ink);font-size:14.5px;flex:1;line-height:1.35;}
+  .kpi-item-target{font-family:'Sora';font-weight:700;color:#fff;background:var(--teal);font-size:12px;white-space:nowrap;padding:3px 10px;border-radius:999px;}
+  .kpi-item-detail{font-size:13px;color:#3a525e;margin-top:6px;line-height:1.55;white-space:pre-wrap;}
+  .item-actions{display:flex;gap:8px;margin-top:8px;}
+  .mini{background:none;border:1px solid var(--line);border-radius:7px;font-size:12px;color:var(--muted);padding:4px 12px;cursor:pointer;font-family:inherit;}
+  .mini:hover{background:var(--paper);color:var(--ink);}
+  .mini.del:hover{color:var(--red);border-color:var(--red);}
+  .add-item{width:100%;margin-top:12px;background:var(--teal-soft);color:var(--teal);border:1px dashed var(--teal);border-radius:8px;padding:9px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;}
+  .add-item:hover{filter:brightness(.97);}
+  .add-item.amber{background:var(--amber-soft);color:#b8741a;border-color:var(--amber);}
+
+  .inline-form{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px;display:flex;flex-direction:column;gap:8px;}
+  .inline-form input,.inline-form textarea{font-family:inherit;font-size:13px;border:1px solid var(--line);border-radius:7px;padding:8px 10px;width:100%;resize:vertical;}
+  .inline-form textarea{min-height:64px;}
+  .form-row{display:flex;gap:8px;justify-content:flex-end;}
+  .form-row .save{background:var(--teal);color:#fff;border:none;border-radius:7px;padding:7px 16px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;}
+  .form-row .cancel{background:none;border:1px solid var(--line);border-radius:7px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--muted);}
+
+  /* Goals page */
+  .goal-block{border-top:1px solid var(--line);padding:14px 0 6px;}
+  .goal-block:first-child{border-top:none;}
+  .goal-title-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+  .goal-title{font-weight:700;color:var(--ink);font-size:14.5px;flex:1;line-height:1.35;}
+  .goal-target{font-family:'Sora';font-weight:700;color:var(--teal);font-size:12px;white-space:nowrap;background:var(--teal-soft);padding:3px 9px;border-radius:7px;}
+  .task-list{margin-top:9px;display:flex;flex-direction:column;gap:6px;}
+  .task-item{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:#3a525e;padding:7px 11px;background:var(--paper);border-radius:8px;align-items:flex-start;}
+  .task-item .t-txt{flex:1;}
+  .task-item .t-freq{color:var(--muted);font-size:12px;white-space:nowrap;}
+  .task-item .t-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;line-height:1;opacity:.5;padding:0 2px;}
+  .task-item .t-del:hover{opacity:1;}
+  .add-task-row{margin-top:9px;display:grid;grid-template-columns:1fr 140px auto;gap:8px;}
+  .add-task-row input{font-family:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
+  .add-task-row .mini-btn{background:var(--teal);color:#fff;border:none;border-radius:8px;padding:0 14px;font-weight:600;cursor:pointer;font-size:13px;}
+  .add-goal-inline{display:grid;grid-template-columns:1fr 150px auto;gap:8px;margin-top:12px;}
+  .add-goal-inline input{font-family:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:9px 11px;}
+  .add-goal-inline .mini-btn{background:var(--amber);color:#fff;border:none;border-radius:8px;padding:0 14px;font-weight:600;cursor:pointer;font-size:13px;}
+
+  /* Modal (edit person from overview) */
+  .overlay{position:fixed;inset:0;background:rgba(15,42,63,.55);backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;z-index:60;overflow-y:auto;}
+  .overlay.open{display:flex;}
+  .modal{background:var(--white);border-radius:18px;max-width:600px;width:100%;box-shadow:0 30px 70px -20px rgba(15,42,63,.6);overflow:hidden;animation:pop .2s ease;}
+  @keyframes pop{from{transform:translateY(12px) scale(.98);opacity:0;}to{transform:none;opacity:1;}}
+  .modal-head{padding:22px 26px;color:#fff;position:relative;}
+  .modal-head .m-role{font-family:'Sora';font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.85;}
+  .modal-head .m-name{font-size:23px;font-weight:700;margin-top:4px;line-height:1.2;}
+  .modal-head .m-rank{font-family:'Sora';font-weight:700;font-size:13px;opacity:.9;margin-top:4px;}
+  .modal-head .close{position:absolute;top:16px;right:18px;background:rgba(255,255,255,.2);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:20px;cursor:pointer;line-height:1;}
+  .modal-head .close:hover{background:rgba(255,255,255,.32);}
+  .modal-body{padding:22px 26px 8px;}
+  .section-label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:4px 0 10px;}
+  .edit-field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+  .edit-row{display:flex;gap:12px;}
+  .edit-field.half{flex:1;}
+  .edit-field label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;}
+  .edit-field input,.edit-field select{font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%;}
+  .modal-foot{padding:14px 26px 22px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);margin-top:6px;}
+
+  .saved-flash{position:fixed;bottom:24px;left:calc(50% + var(--nav-w)/2);transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 22px;border-radius:999px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:90;}
+  .saved-flash.show{opacity:1;}
+
+  /* mobile nav toggle */
+  .nav-toggle{display:none;position:fixed;top:14px;left:14px;z-index:40;background:var(--ink);color:#fff;border:none;width:44px;height:44px;border-radius:11px;font-size:20px;cursor:pointer;box-shadow:var(--shadow);}
+  .nav-scrim{display:none;position:fixed;inset:0;background:rgba(15,42,63,.5);z-index:25;}
+
+  @media(max-width:860px){
+    .nav{transform:translateX(-100%);transition:transform .28s ease;}
+    .nav.open{transform:translateX(0);}
+    .nav-scrim.show{display:block;}
+    .nav-toggle{display:block;}
+    .main{margin-left:0;padding:70px 20px 80px;}
+    .saved-flash{left:50%;}
+    .add-task-row,.add-goal-inline{grid-template-columns:1fr;}
+    .edit-row{flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== Left Nav ===== -->
+  <nav class="nav" id="nav">
+    <div class="nav-brand">
+      <div class="eyebrow">Clean Zone Unit</div>
+      <h1>LMN2</h1>
+      <div class="sub">ระบบแผนผัง · KPI · เป้าหมาย<br>หน่วยซ่อมบำรุงเครื่องจักร</div>
+    </div>
+    <div class="nav-item active" data-page="overview"><span class="ic">🗂️</span> หน้ารวมทั้งหมด</div>
+    <div class="nav-item" data-page="kpi"><span class="ic">📊</span> หน้า KPI</div>
+    <div class="nav-item" data-page="goals"><span class="ic">🎯</span> หน้าเป้าหมาย</div>
+    <div class="nav-spacer"></div>
+    <div class="nav-foot">
+      <div class="mode-box" id="modeBox">
+        <span class="mode-dot" id="modeDot"></span>
+        <span id="modeLabel">โหมดดูอย่างเดียว</span>
+      </div>
+      <button class="nav-btn" id="editToggle">🔓 เข้าสู่โหมดแก้ไข</button>
+      <button class="nav-btn edit-only" id="addPerson">+ เพิ่มบุคลากร</button>
+      <button class="nav-btn edit-only" id="resetData">คืนค่าข้อมูลเริ่มต้น</button>
+      <div class="nav-count"><span id="headcount">0</span> คนในหน่วย · <span id="syncState">—</span></div>
+    </div>
+  </nav>
+  <div class="nav-scrim" id="navScrim"></div>
+  <button class="nav-toggle" id="navToggle">☰</button>
+
+  <!-- ===== Main ===== -->
+  <main class="main">
+
+    <!-- Page 1: Overview -->
+    <section class="page active" id="page-overview">
+      <div class="page-head">
+        <div>
+          <div class="ph-eyebrow">Organization Map · By Level</div>
+          <h2>แผนผังองค์กรรวม</h2>
+          <p>จัดเรียงตามระดับตำแหน่ง คลิกที่การ์ดเพื่อดู/แก้ไขข้อมูลบุคคล เครื่องจักร และเป้าหมาย</p>
+        </div>
+        <div><span class="big" id="headcount2">0</span><span class="lbl">บุคลากร</span></div>
+      </div>
+      <div id="levels"></div>
+    </section>
+
+    <!-- Page 2: KPI -->
+    <section class="page" id="page-kpi">
+      <div class="page-head">
+        <div>
+          <div class="ph-eyebrow">Key Performance Indicators</div>
+          <h2>หน้า KPI รายบุคคล</h2>
+          <p>KPI ประจำแต่ละคน (แยกอิสระจากเป้าหมาย) — เพิ่มหัวข้อ KPI, Target และรายละเอียดงานได้เอง</p>
+        </div>
+      </div>
+      <div class="plist" id="kpiList"></div>
+    </section>
+
+    <!-- Page 3: Goals -->
+    <section class="page" id="page-goals">
+      <div class="page-head">
+        <div>
+          <div class="ph-eyebrow">Goals &amp; Key Actions</div>
+          <h2>หน้าเป้าหมาย &amp; ทีเด็ด</h2>
+          <p>เป้าหมายและทีเด็ดของแต่ละคนตามข้อมูลในไฟล์ — เพิ่ม/แก้ไข/ลบเป้าหมายและงานได้</p>
+        </div>
+      </div>
+      <div class="plist" id="goalsList"></div>
+    </section>
+
+  </main>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+<div class="saved-flash" id="flash">บันทึกแล้ว</div>
+
+<script>
+const DEFAULT_DATA = [
+  {
+    id:"p_phum", rank:75, role:"รักษาการผู้จัดการฝ่าย",
+    name:"นายพิทยุตม์ ทรัพย์สมบูรณ์", nickname:"ภูมิ",
+    machines:["กำกับดูแลภาพรวมหน่วย LMN2"],
+    note:"(ยังไม่มีเป้าหมายรายบุคคลในไฟล์ — เพิ่มได้)",
+    goals:[ {title:"กำกับดูแลและขับเคลื่อนเป้าหมายของฝ่าย LMN2", target:"", tasks:[]} ]
+  },
+  {
+    id:"p_bank", rank:65, role:"รักษาการผู้จัดการส่วน",
+    name:"นายคงฤทธิ์ จันทะสิงห์", nickname:"แบงค์",
+    machines:["เครื่อง X-Ray","เครื่อง CCM"],
+    goals:[
+      {title:"เป้าหมาย 1 : ลดเวลาเบรคดาวน์เครื่องจักรหลักพื้นที่ Cleanzone — X-Ray / CCM", target:"", tasks:[
+        {txt:"ทีเด็ด 1 : ตรวจเช็คความสมบูรณ์อุปกรณ์ Safety Sensor X-ray", freq:"1 ครั้ง/วัน"},
+        {txt:"ทีเด็ด 2 : ตรวจเช็คระยะชุดบด สกรู รังผึ้ง ชุดใบมีด", freq:"1 ครั้ง/สัปดาห์"}
+      ]},
+      {title:"เป้าหมาย 2 : คุณภาพเครื่องจักร CCM", target:"ST1>50%, ST2>25%", tasks:[
+        {txt:"ทีเด็ด 2 : ตรวจเช็ค Yield stage 1 2 เครื่อง CCM", freq:"1 ครั้ง/วัน"}
+      ]},
+      {title:"เป้าหมาย 3 : นวัตกรรม และการปรับปรุงงาน", target:"2 เรื่อง/เดือน", tasks:[
+        {txt:"ทีเด็ด 3 : ขับเคลื่อนนโยบายการลดพลังงานและต้นทุนในกระบวนการผลิต", freq:"2,500,000 หน่วย/ปี"}
+      ]}
+    ]
+  },
+  {
+    id:"p_kob", rank:65, role:"ผู้เชี่ยวชาญ",
+    name:"นายสัญญา ไก่ฟ้า", nickname:"กบ",
+    machines:["Chiller","ราว Weighing"],
+    goals:[
+      {title:"เป้าหมาย 1 : ลดเวลาเบรคดาวน์เครื่องจักรหลักพื้นที่ Cleanzone — Chiller / ราว Weighing", target:"", tasks:[
+        {txt:"ทีเด็ด 1 : ตรวจเช็คกระแสมอเตอร์ Chiller A,B 1-4", freq:"1 ครั้ง/วัน"},
+        {txt:"ทีเด็ด 2 : ตรวจเช็คระยะตึงโซ่และการทำงานของ tension", freq:"1 ครั้ง/วัน"}
+      ]},
+      {title:"เป้าหมาย 2 : คุณภาพเครื่องจักร Weighing (ไก่แขวนย้อน)", target:"< 3%", tasks:[
+        {txt:"ทีเด็ด 2 : ตรวจเช็ค % ไก่แขวนย้อน", freq:"1 ครั้ง/วัน"}
+      ]},
+      {title:"เป้าหมาย 3 : นวัตกรรม และการปรับปรุงงาน", target:"2 เรื่อง/เดือน", tasks:[
+        {txt:"ทีเด็ด 3 : ขับเคลื่อนนโยบายการลดพลังงานและต้นทุนในกระบวนการผลิต", freq:"2,500,000 หน่วย/ปี"}
+      ]}
+    ]
+  },
+  {
+    id:"p_serid", rank:55, role:"ผู้จัดการแผนก",
+    name:"นายประเสริฐ คุณารักษ์", nickname:"เสริฐ",
+    machines:["เครื่อง Belt Grade (3 เครื่อง)","เครื่อง I-Cut (2 Line)"],
+    goals:[
+      {title:"เป้าหมาย 1 : ลดเวลาเบรคดาวน์เครื่องจักรหลักพื้นที่ Cleanzone — Belt Grade (3 เครื่อง) / I-Cut", target:"BG 20 นาที/เดือน", tasks:[
+        {txt:"ทีเด็ด 1 : ตรวจเช็คสถานะสายพาน Weigh BG2 ปีกบน +- 1 g", freq:"1 ครั้ง/วัน"},
+        {txt:"ทีเด็ด 2 : ตรวจเช็คสถานะสายพาน Weigh + Discharge BG ขาซี", freq:"1 ครั้ง/วัน"},
+        {txt:"ทีเด็ด : ตรวจเช็คความสมบูรณ์ชุดจับใบมีดเครื่อง I-cut 22,122", freq:"1 ครั้ง/สัปดาห์"}
+      ]},
+      {title:"เป้าหมาย 2 : คุณภาพเครื่องจักร BG", target:"> 95%", tasks:[
+        {txt:"ทีเด็ด 2 : ตรวจเช็ค Accuracy ของน้ำหนัก ปีกบน ปีกกลาง ขาซี", freq:"1 ครั้ง/วัน"}
+      ]},
+      {title:"เป้าหมาย 2 (I-Cut) : คุณภาพเครื่องจักร I-cut (2 Line)", target:"ACCU > 90%", tasks:[
+        {txt:"ทีเด็ด 2 : ตรวจเช็ค Accuracy ของน้ำหนัก BLK ตาม STD Dev.1", freq:"1 ครั้ง/วัน"}
+      ]},
+      {title:"เป้าหมาย 3 : นวัตกรรม และการปรับปรุงงาน", target:"2 เรื่อง/เดือน", tasks:[
+        {txt:"ทีเด็ด 3 : ขับเคลื่อนนโยบายการลดพลังงานและต้นทุนในกระบวนการผลิต", freq:"2,500,000 หน่วย/ปี"}
+      ]}
+    ]
+  },
+  {
+    id:"p_boom", rank:40, role:"เจ้าหน้าที่",
+    name:"นายศุภณัฐ พฤกษชาติ", nickname:"บูม",
+    machines:["Auto Debone (2 เครื่อง)","Toridas 2 loop"],
+    note:"รหัส 680415",
+    goals:[
+      {title:"เป้าหมาย 1 : ลดเวลาเบรคดาวน์เครื่องจักรหลักพื้นที่ Cleanzone — Auto Debone (2 เครื่อง) / Toridas 2 loop", target:"", tasks:[
+        {txt:"ทีเด็ด 1 : ตรวจเช็คชุดเกียร์ Pre-cutter เครื่อง Drum 1-4", freq:"1 ครั้ง/วัน"},
+        {txt:"ทีเด็ด 2 : ตรวจเช็คกระแสมอเตอร์ขับเครื่อง Thigh 1-4", freq:"1 ครั้ง/วัน"},
+        {txt:"ทีเด็ด 3 : ตรวจเช็คเทอมินอลมอเตอร์ใบมีด", freq:"1 ครั้ง/สัปดาห์"}
+      ]},
+      {title:"เป้าหมาย 2 : คุณภาพเครื่องจักร Auto debone", target:"> 71.5%", tasks:[
+        {txt:"ทีเด็ด 2 : ตรวจเช็ค Yield เครื่อง Drum, Thigh Debone", freq:"1 ครั้ง/วัน"}
+      ]},
+      {title:"เป้าหมาย 3 : นวัตกรรม และการปรับปรุงงาน", target:"2 เรื่อง/เดือน", tasks:[
+        {txt:"ทีเด็ด 3 : ขับเคลื่อนนโยบายการลดพลังงานและต้นทุนในกระบวนการผลิต", freq:"2,500,000 หน่วย/ปี"}
+      ]}
+    ]
+  }
+];
+
+/* ============================================================
+   การเชื่อมต่อออนไลน์ (Google Apps Script)
+   1) Deploy Code.gs เป็น Web App แล้วคัดลอก URL มาวางที่ API_URL
+   2) ตั้ง PIN ให้ตรงกับใน Code.gs (ตัวแปร EDIT_PIN)
+   ถ้า API_URL ยังว่าง ระบบจะทำงานแบบออฟไลน์ (เก็บในเครื่อง) อัตโนมัติ
+   ============================================================ */
+const API_URL = "https://script.google.com/macros/s/AKfycbwPwbMStMJzDcPfVNyZd_Nv-bi-OP5FIEUWiyw6cSTHCt-_IbEMbRwP3p_dAAvmzfJ7/exec";          // << วาง URL ของ Web App ตรงนี้ เช่น https://script.google.com/macros/s/AKfy.../exec
+const LOCAL_STORE = "lmn2_orgchart_v3";
+const LOCAL_KPI   = "lmn2_kpi_v1";
+
+let data = [];
+let kpiStore = {};           // { personId: [ {id,title,target,detail} ] }
+let editMode = false;
+let currentPin = "";
+const ONLINE = !!API_URL;
+
+/* ---------- helper: local storage fallback ---------- */
+async function lsGet(k){ try{ const r=await window.storage.get(k); return r&&r.value?JSON.parse(r.value):null; }catch(e){ return null; } }
+async function lsSet(k,v){ try{ await window.storage.set(k,JSON.stringify(v)); }catch(e){} }
+
+function setSync(txt){ const el=document.getElementById('syncState'); if(el) el.textContent=txt; }
+
+/* ---------- โหลดข้อมูล (ออนไลน์ก่อน, ถ้าไม่มีค่อยใช้ในเครื่อง) ---------- */
+async function loadAll(){
+  if(ONLINE){
+    try{
+      setSync('กำลังโหลด...');
+      const res=await fetch(API_URL,{method:'GET'});
+      const j=await res.json();
+      if(j.ok && j.payload){
+        data = (j.payload.data && j.payload.data.length) ? j.payload.data : JSON.parse(JSON.stringify(DEFAULT_DATA));
+        kpiStore = j.payload.kpi || {};
+        setSync('ออนไลน์ ✓');
+        return;
+      }
+      throw new Error(j.error||'no payload');
+    }catch(e){
+      console.error('online load failed',e);
+      setSync('โหลดออนไลน์ไม่ได้ · ใช้ข้อมูลในเครื่อง');
+    }
+  }
+  // fallback local
+  const d=await lsGet(LOCAL_STORE);
+  const k=await lsGet(LOCAL_KPI);
+  data = d && d.length ? d : JSON.parse(JSON.stringify(DEFAULT_DATA));
+  kpiStore = k || {};
+  if(!ONLINE) setSync('ออฟไลน์ (ในเครื่อง)');
+}
+
+/* ---------- บันทึกข้อมูล ---------- */
+let saveTimer;
+async function saveAll(){
+  // เซฟในเครื่องเสมอ (สำรอง)
+  await lsSet(LOCAL_STORE, data);
+  await lsSet(LOCAL_KPI, kpiStore);
+  if(ONLINE){
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(pushOnline, 400); // รวบการบันทึกถี่ๆ เป็นครั้งเดียว
+  } else {
+    flash();
+  }
+}
+async function pushOnline(){
+  try{
+    setSync('กำลังบันทึก...');
+    const res=await fetch(API_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, // เลี่ยง CORS preflight
+      body:JSON.stringify({ pin: currentPin, data: data, kpi: kpiStore })
+    });
+    const j=await res.json();
+    if(j.ok){ setSync('บันทึกแล้ว ✓ ออนไลน์'); flash(); }
+    else { setSync('บันทึกไม่สำเร็จ: '+(j.error||'')); alert('บันทึกไม่สำเร็จ: '+(j.error||'')); }
+  }catch(e){ console.error(e); setSync('เชื่อมต่อไม่ได้'); }
+}
+
+/* ทั้งสองชื่อนี้ให้เรียก saveAll เหมือนกัน (โครงเดิมเรียก persist / persistKpi) */
+async function persist(){ await saveAll(); }
+async function persistKpi(){ await saveAll(); }
+
+const LEVEL_NAMES = {
+  75:{th:"ระดับ 75", sub:"รักษาการผู้จัดการฝ่าย"},
+  65:{th:"ระดับ 65", sub:"รักษาการผู้จัดการส่วน / ผู้เชี่ยวชาญ"},
+  55:{th:"ระดับ 55", sub:"ผู้จัดการแผนก"},
+  40:{th:"ระดับ 40", sub:"เจ้าหน้าที่"}
+};
+
+let flashT;
+function flash(){ const f=document.getElementById('flash'); f.classList.add('show'); clearTimeout(flashT); flashT=setTimeout(()=>f.classList.remove('show'),1300); }
+function esc(s){return (s||"").replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function lvClass(r){ if(r>=75)return'lv75'; if(r>=65)return'lv65'; if(r>=55)return'lv55'; return'lv40'; }
+function pcClass(r){ if(r>=75)return'pc75'; if(r>=65)return'pc65'; if(r>=55)return'pc55'; return'pc40'; }
+function headColor(r){ if(r>=75)return'linear-gradient(135deg,#0f2a3f,#1f5f7a)'; if(r>=65)return'linear-gradient(135deg,#1f5f7a,#2a9d8f)'; if(r>=55)return'linear-gradient(135deg,#2a9d8f,#1f8e80)'; return'linear-gradient(135deg,#e9a23b,#c97f1c)'; }
+function sortedPeople(){ return [...data].sort((a,b)=>b.rank-a.rank); }
+
+/* ===== Overview page ===== */
+function renderOverview(){
+  const host=document.getElementById('levels'); host.innerHTML='';
+  const c=data.length;
+  document.getElementById('headcount').textContent=c;
+  document.getElementById('headcount2').textContent=c;
+  const ranks=[...new Set(data.map(p=>p.rank))].sort((a,b)=>b-a);
+  ranks.forEach(rank=>{
+    const people=data.filter(p=>p.rank===rank);
+    const band=document.createElement('div'); band.className='level '+lvClass(rank);
+    const info=LEVEL_NAMES[rank]||{th:'ระดับ '+rank,sub:''};
+    band.innerHTML=`<div class="level-head"><span class="level-rank">${rank}</span><span class="level-name">${esc(info.th)}<small>${esc(info.sub)}</small></span></div><div class="level-cards"></div>`;
+    const cards=band.querySelector('.level-cards');
+    people.forEach(p=>cards.appendChild(orgCard(p)));
+    host.appendChild(band);
+  });
+}
+function orgCard(p){
+  const el=document.createElement('div'); el.className='node-card '+lvClass(p.rank); el.tabIndex=0;
+  const nick=p.nickname?` <span class="nickname">(${esc(p.nickname)})</span>`:'';
+  const chips=(p.machines||[]).map(m=>`<span class="chip">${esc(m)}</span>`).join('');
+  el.innerHTML=`<div class="accent"></div>
+    <div class="role-row"><span class="role-tag">${esc(p.role)}</span><span class="rank-chip">ระดับ ${p.rank}</span></div>
+    <div class="person">${esc(p.name)}${nick}</div>
+    <div class="duties"><div class="d-head">เครื่องจักร / ความรับผิดชอบ</div>${chips||'<span class="empty-note">—</span>'}</div>
+    <div class="view-hint">▸ คลิกเพื่อดู/แก้ไขข้อมูล</div>`;
+  el.addEventListener('click',()=>openModal(p.id));
+  el.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();openModal(p.id);} });
+  return el;
+}
+
+/* ===== shared person-card header ===== */
+function pcHead(p){
+  const nick=p.nickname?` <span class="nk">(${esc(p.nickname)})</span>`:'';
+  return `<div class="pcard-head"><span class="pc-rank">${p.rank}</span>
+    <div><div class="pc-name">${esc(p.name)}${nick}</div><div class="pc-role">${esc(p.role)}</div></div></div>`;
+}
+
+/* ===== KPI page (independent data) ===== */
+function renderKpi(){
+  const host=document.getElementById('kpiList'); host.innerHTML='';
+  sortedPeople().forEach(p=>{
+    const items=kpiStore[p.id]||[];
+    const wrap=document.createElement('div'); wrap.className='pcard '+pcClass(p.rank);
+    let itemsHtml='';
+    if(!items.length){ itemsHtml='<div class="empty-note">ยังไม่มี KPI — กดปุ่มด้านล่างเพื่อเพิ่ม</div>'; }
+    else items.forEach((it,idx)=>{
+      itemsHtml+=`<div class="kpi-item">
+        <div class="kpi-item-top"><div class="kpi-item-title">${esc(it.title)}</div>${it.target?`<div class="kpi-item-target">${esc(it.target)}</div>`:''}</div>
+        ${it.detail?`<div class="kpi-item-detail">${esc(it.detail)}</div>`:''}
+        <div class="item-actions"><button class="mini" data-kedit="${p.id}:${idx}">แก้ไข</button><button class="mini del" data-kdel="${p.id}:${idx}">ลบ</button></div>
+      </div>`;
+    });
+    wrap.innerHTML=pcHead(p)+`<div class="pcard-body">${itemsHtml}<button class="add-item" data-kadd="${p.id}">+ เพิ่ม KPI</button></div>`;
+    host.appendChild(wrap);
+  });
+  host.querySelectorAll('[data-kadd]').forEach(b=>b.addEventListener('click',()=>kpiForm(b.dataset.kadd,null,b)));
+  host.querySelectorAll('[data-kedit]').forEach(b=>b.addEventListener('click',()=>{const[pid,i]=b.dataset.kedit.split(':');kpiForm(pid,+i,b.closest('.kpi-item'));}));
+  host.querySelectorAll('[data-kdel]').forEach(b=>b.addEventListener('click',()=>{const[pid,i]=b.dataset.kdel.split(':');if(confirm('ลบ KPI นี้?')){kpiStore[pid].splice(+i,1);if(!kpiStore[pid].length)delete kpiStore[pid];persistKpi();renderKpi();}}));
+}
+function kpiForm(pid,idx,anchor){
+  const editing=idx!==null&&idx!==undefined;
+  const cur=editing?kpiStore[pid][idx]:{title:'',target:'',detail:''};
+  const f=document.createElement('div'); f.className='inline-form';
+  f.innerHTML=`<input class="kf-title" placeholder="หัวข้อ KPI (เช่น ลดเบรคดาวน์เครื่องจักร)" value="${esc(cur.title)}">
+    <input class="kf-target" placeholder="Target / เป้าหมาย (เช่น < 20 นาที/เดือน)" value="${esc(cur.target)}">
+    <textarea class="kf-detail" placeholder="รายละเอียดของงาน...">${esc(cur.detail)}</textarea>
+    <div class="form-row"><button class="cancel">ยกเลิก</button><button class="save">บันทึก</button></div>`;
+  if(editing) anchor.appendChild(f); else anchor.parentNode.insertBefore(f,anchor);
+  f.querySelector('.kf-title').focus();
+  f.querySelector('.cancel').addEventListener('click',renderKpi);
+  f.querySelector('.save').addEventListener('click',()=>{
+    const title=f.querySelector('.kf-title').value.trim();
+    const target=f.querySelector('.kf-target').value.trim();
+    const detail=f.querySelector('.kf-detail').value.trim();
+    if(!title){f.querySelector('.kf-title').focus();return;}
+    if(!kpiStore[pid])kpiStore[pid]=[];
+    if(editing)kpiStore[pid][idx]={...cur,title,target,detail};
+    else kpiStore[pid].push({id:'k_'+Date.now(),title,target,detail});
+    persistKpi(); renderKpi();
+  });
+}
+
+/* ===== Goals page ===== */
+function renderGoals(){
+  const host=document.getElementById('goalsList'); host.innerHTML='';
+  sortedPeople().forEach(p=>{
+    const wrap=document.createElement('div'); wrap.className='pcard '+pcClass(p.rank);
+    let gHtml='';
+    if(!p.goals||!p.goals.length){ gHtml='<div class="empty-note">ยังไม่มีเป้าหมาย — เพิ่มได้ด้านล่าง</div>'; }
+    else p.goals.forEach((g,gi)=>{
+      let tasks='';
+      if(!g.tasks||!g.tasks.length) tasks='<div class="empty-note">ยังไม่มีงาน</div>';
+      else tasks=g.tasks.map((t,ti)=>`<div class="task-item"><span class="t-txt">${esc(t.txt)}</span><span class="t-freq">${esc(t.freq||'')}</span><button class="t-del" data-tdel="${p.id}:${gi}:${ti}" title="ลบงาน">✕</button></div>`).join('');
+      gHtml+=`<div class="goal-block">
+        <div class="goal-title-row"><div class="goal-title">${esc(g.title)}</div>${g.target?`<div class="goal-target">${esc(g.target)}</div>`:''}<button class="t-del" data-gdel="${p.id}:${gi}" title="ลบเป้าหมาย" style="font-size:15px;">🗑</button></div>
+        <div class="task-list">${tasks}</div>
+        <div class="add-task-row"><input placeholder="เพิ่มงาน / ทีเด็ด..." data-ttxt="${p.id}:${gi}"><input placeholder="ความถี่ / Target" data-tfreq="${p.id}:${gi}"><button class="mini-btn" data-tadd="${p.id}:${gi}">เพิ่ม</button></div>
+      </div>`;
+    });
+    wrap.innerHTML=pcHead(p)+`<div class="pcard-body">${gHtml}
+      <div class="add-goal-inline"><input placeholder="ชื่อเป้าหมายใหม่..." data-gtitle="${p.id}"><input placeholder="Target" data-gtarget="${p.id}"><button class="mini-btn" data-gadd="${p.id}">+ เพิ่มเป้าหมาย</button></div>
+    </div>`;
+    host.appendChild(wrap);
+  });
+  bindGoals(host);
+}
+function bindGoals(host){
+  host.querySelectorAll('[data-tadd]').forEach(b=>b.addEventListener('click',()=>{
+    const[pid,gi]=b.dataset.tadd.split(':'); const p=data.find(x=>x.id===pid);
+    const txt=host.querySelector(`[data-ttxt="${pid}:${gi}"]`).value.trim();
+    const freq=host.querySelector(`[data-tfreq="${pid}:${gi}"]`).value.trim();
+    if(!txt)return; p.goals[gi].tasks=p.goals[gi].tasks||[]; p.goals[gi].tasks.push({txt,freq}); persist(); renderGoals();
+  }));
+  host.querySelectorAll('[data-tdel]').forEach(b=>b.addEventListener('click',()=>{
+    const[pid,gi,ti]=b.dataset.tdel.split(':'); const p=data.find(x=>x.id===pid);
+    p.goals[gi].tasks.splice(+ti,1); persist(); renderGoals();
+  }));
+  host.querySelectorAll('[data-gdel]').forEach(b=>b.addEventListener('click',()=>{
+    const[pid,gi]=b.dataset.gdel.split(':'); const p=data.find(x=>x.id===pid);
+    if(confirm('ลบเป้าหมายนี้และงานทั้งหมด?')){p.goals.splice(+gi,1);persist();renderGoals();}
+  }));
+  host.querySelectorAll('[data-gadd]').forEach(b=>b.addEventListener('click',()=>{
+    const pid=b.dataset.gadd; const p=data.find(x=>x.id===pid);
+    const title=host.querySelector(`[data-gtitle="${pid}"]`).value.trim();
+    const target=host.querySelector(`[data-gtarget="${pid}"]`).value.trim();
+    if(!title)return; p.goals=p.goals||[]; p.goals.push({title,target,tasks:[]}); persist(); renderGoals();
+  }));
+}
+
+/* ===== Modal (edit person) ===== */
+function openModal(id){
+  const p=data.find(x=>x.id===id); if(!p)return;
+  const m=document.getElementById('modal'); const nick=p.nickname?` (${esc(p.nickname)})`:'';
+  const ro = editMode ? '' : ' readonly disabled';
+  const label = editMode ? 'ข้อมูลบุคคล (แก้ไขได้)' : 'ข้อมูลบุคคล (ดูอย่างเดียว)';
+  m.innerHTML=`<div class="modal-head" style="background:${headColor(p.rank)}">
+      <button class="close" data-close>×</button>
+      <div class="m-role">${esc(p.role)}</div>
+      <div class="m-name">${esc(p.name)}${nick}</div>
+      <div class="m-rank">ระดับ ${p.rank}</div>
+    </div>
+    <div class="modal-body">
+      <div class="section-label">${label}</div>
+      <div class="edit-field"><label>ชื่อ-นามสกุล</label><input id="f_name" value="${esc(p.name)}"${ro}></div>
+      <div class="edit-row">
+        <div class="edit-field half"><label>ชื่อเล่น</label><input id="f_nick" value="${esc(p.nickname||'')}"${ro}></div>
+        <div class="edit-field half"><label>ระดับ (ตัวเลข)</label><input id="f_rank" type="number" value="${p.rank}"${ro}></div>
+      </div>
+      <div class="edit-field"><label>ตำแหน่ง</label><input id="f_role" value="${esc(p.role)}"${ro}></div>
+      <div class="edit-field"><label>เครื่องจักร / ความรับผิดชอบ (คั่นด้วย ,)</label><input id="f_machines" value="${esc((p.machines||[]).join(', '))}"${ro}></div>
+      ${p.note?`<div class="empty-note">หมายเหตุ: ${esc(p.note)}</div>`:''}
+      <div class="empty-note">▸ จัดการเป้าหมาย/ทีเด็ด ได้ที่หน้า "เป้าหมาย" · จัดการ KPI ที่หน้า "KPI"</div>
+    </div>
+    <div class="modal-foot">
+      ${editMode?'<button class="btn btn-ghost" data-del-person>ลบบุคคลนี้</button>':'<span></span>'}
+      <button class="btn btn-primary" data-close>เสร็จสิ้น</button>
+    </div>`;
+  if(editMode){
+    m.querySelector('#f_name').addEventListener('change',e=>{p.name=e.target.value;persist();refreshAll();});
+    m.querySelector('#f_nick').addEventListener('change',e=>{p.nickname=e.target.value;persist();refreshAll();});
+    m.querySelector('#f_rank').addEventListener('change',e=>{p.rank=parseInt(e.target.value,10)||0;persist();refreshAll();openModal(id);});
+    m.querySelector('#f_role').addEventListener('change',e=>{p.role=e.target.value;persist();refreshAll();});
+    m.querySelector('#f_machines').addEventListener('change',e=>{p.machines=e.target.value.split(',').map(s=>s.trim()).filter(Boolean);persist();refreshAll();});
+    m.querySelector('[data-del-person]').addEventListener('click',()=>{ if(confirm('ลบบุคคลนี้ออกจากระบบ?')){data=data.filter(x=>x.id!==id);persist();refreshAll();closeModal();} });
+  }
+  m.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeModal));
+  document.getElementById('overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('overlay').classList.remove('open');}
+document.getElementById('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+/* ===== render all ===== */
+function refreshAll(){ renderOverview(); renderKpi(); renderGoals(); }
+
+/* ===== nav ===== */
+document.querySelectorAll('.nav-item').forEach(it=>{
+  it.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+    it.classList.add('active');
+    const page=it.dataset.page;
+    document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active'));
+    document.getElementById('page-'+page).classList.add('active');
+    closeNav();
+  });
+});
+function openNav(){document.getElementById('nav').classList.add('open');document.getElementById('navScrim').classList.add('show');}
+function closeNav(){document.getElementById('nav').classList.remove('open');document.getElementById('navScrim').classList.remove('show');}
+document.getElementById('navToggle').addEventListener('click',openNav);
+document.getElementById('navScrim').addEventListener('click',closeNav);
+
+/* ===== toolbar ===== */
+document.getElementById('addPerson').addEventListener('click',()=>{
+  if(!requireEdit()) return;
+  const id='p_'+Date.now();
+  data.push({id,rank:40,role:'เจ้าหน้าที่',name:'ชื่อใหม่',nickname:'',machines:[],goals:[]});
+  persist(); refreshAll(); openModal(id);
+});
+document.getElementById('resetData').addEventListener('click',async()=>{
+  if(!requireEdit()) return;
+  if(confirm('คืนค่าข้อมูลแผนผัง/เป้าหมายกลับเป็นค่าเริ่มต้น? (KPI ที่กรอกไว้จะยังอยู่)')){
+    data=JSON.parse(JSON.stringify(DEFAULT_DATA)); await persist(); refreshAll();
+  }
+});
+
+/* ===== โหมดแก้ไข / PIN ===== */
+// ในโหมดออฟไลน์ (ยังไม่ตั้ง API_URL) ให้แก้ได้เลยเพื่อทดสอบ โดย PIN อะไรก็ผ่าน
+function requireEdit(){
+  if(editMode) return true;
+  alert('กรุณาเข้าสู่โหมดแก้ไขก่อน (ปุ่ม 🔓 ที่เมนูด้านซ้าย)');
+  return false;
+}
+function applyMode(){
+  document.body.classList.toggle('edit-mode', editMode);
+  document.getElementById('modeLabel').textContent = editMode ? 'โหมดแก้ไข (แก้ข้อมูลได้)' : 'โหมดดูอย่างเดียว';
+  document.getElementById('editToggle').textContent = editMode ? '🔒 ออกจากโหมดแก้ไข' : '🔓 เข้าสู่โหมดแก้ไข';
+}
+document.getElementById('editToggle').addEventListener('click',()=>{
+  if(editMode){ editMode=false; currentPin=""; applyMode(); return; }
+  const pin=prompt('ใส่ PIN เพื่อเข้าสู่โหมดแก้ไข:');
+  if(pin===null) return;
+  currentPin=pin.trim();
+  if(ONLINE){
+    // ออนไลน์: ตรวจ PIN จริงตอนบันทึกครั้งแรก แต่เปิดโหมดให้ก่อน
+    editMode=true; applyMode();
+    alert('เข้าสู่โหมดแก้ไขแล้ว — ถ้า PIN ไม่ถูกต้อง ระบบจะแจ้งเตือนตอนบันทึก');
+  } else {
+    // ออฟไลน์: ผ่านเลย
+    editMode=true; applyMode();
+  }
+});
+
+(async()=>{ await loadAll(); applyMode(); refreshAll(); })();
+</script>
+</body>
+</html>
